@@ -2,15 +2,6 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://liuqing.fun/2024/11/10/coliru/</loc>
-    
-    <lastmod>2024-11-10</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://liuqing.fun/2024/10/05/procrasination/</loc>
     
     <lastmod>2024-10-07</lastmod>
@@ -40,7 +31,7 @@
 
   <url>
     <loc>https://liuqing.fun/</loc>
-    <lastmod>2024-11-24</lastmod>
+    <lastmod>2024-11-25</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -48,7 +39,7 @@
   
   <url>
     <loc>https://liuqing.fun/tags/essays/</loc>
-    <lastmod>2024-11-24</lastmod>
+    <lastmod>2024-11-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
