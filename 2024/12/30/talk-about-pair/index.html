@@ -104,80 +104,73 @@
   
     <div class="article-entry" itemprop="articleBody">
        
-  <h2 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h2><p>这一切，要从我朋友遇到的编译问题说起。</p>
-<p>我有个朋友，把它的老代码改成C++11标准编译时，出错了。</p>
-<p>他的代码大约是这样的：</p>
+  <h2 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h2><p>故事的开端，是意味朋友将老代码迁移到C++11标准时遭遇了编译错误。他的代码大致如下：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">void</span> <span class="title">fun</span><span class="params">(std::pair&lt;<span class="type">int</span> ,<span class="type">int</span>&gt;)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> v = <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(std::<span class="built_in">make_pair</span>&lt;<span class="type">int</span>,<span class="type">int</span>&gt;(v,<span class="number">6</span>));</span><br></pre></td></tr></table></figure>
-<p>出错信息大约就是</p>
+<p>编译器抛出了错误：</p>
 <blockquote>
 <p>cannot bind rvalue reference of type ‘int&amp;&amp;’ to lvalue of type ‘int’  </p>
 </blockquote>
-<p>直接原因很明显，就是<code>std::make_pair&lt;int,int&gt;</code>需要<code>int &amp;&amp;</code>作为参数，而<code>v</code>本身是个左值，无法匹配。直接的解决方案也简单，按下面写就可以：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">fun</span>(std::<span class="built_in">make_pair</span>&lt;<span class="type">int</span>&amp;,<span class="type">int</span>&gt;(v,<span class="number">6</span>));</span><br></pre></td></tr></table></figure>
-<p>不用怀疑，这样写是可以通过编译的，fun函数也确实接收了一个<code>pair&lt;int ,int&gt;</code>对象做为输入。至于为什么，这里牵涉到<code>std::decay</code>和<code>引用折叠</code>等知识，这些都不是本文的重点，在此我就略过了。</p>
-<h2 id="聊聊pair"><a href="#聊聊pair" class="headerlink" title="聊聊pair"></a>聊聊pair</h2><p>以上是个引子，基于这个引子，本文主要想聊聊<code>std::pair&lt;int, int&gt;</code>。<br><code>std::pair&lt;int, int&gt;</code>是个模板类，是stl的一部分，它有两个数据成员<code>first</code>和<code>second</code>，并且有各种行为良好的构造函数，有默认的<code>&lt;</code>,<code>==</code>,以及<code>&gt;</code>等操作符。</p>
-<p>试试比较下面两段代码</p>
+<p>错误的原因显而易见，<code>std::make_pair&lt;int,int&gt;</code>需要<code>int &amp;&amp;</code>作为参数，而<code>v</code>是一个左值，无法匹配。一个简单的解决方案是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">fun</span>(std::<span class="built_in">make_pair</span>&lt;<span class="type">int</span>&amp;,<span class="type">int</span>&gt;(v,<span class="number">6</span>));   <span class="comment">//用int&amp;替代int</span></span><br></pre></td></tr></table></figure>
+<p>这样写确实可以通过编译，<code>fun</code>函数也<strong>确实接收了一个<code>pair&lt;int ,int&gt;</code>对象</strong>，没有bug，可正常工作。不过，这背后牵涉的<code>std::decay</code>和<code>引用折叠</code>等知识，并不是本文的重点，这里就不详细展开了。</p>
+<h2 id="聊聊pair"><a href="#聊聊pair" class="headerlink" title="聊聊pair"></a>聊聊pair</h2><p>以上是个引子，基于这个引子，本文主要想聊聊<code>std::pair&lt;int, int&gt;</code>。<br><code>std::pair&lt;int, int&gt;</code>是个模板类，属于<code>stl</code>的一部分，它拥有两个数据成员<code>first</code>和<code>second</code>，并且提供了各种行为良好的构造函数，以及默认的<code>&lt;</code>,<code>==</code>和<code>&gt;</code>等操作符。</p>
+<p>让我们通过两个代码片段来比较一下：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// code segment A</span></span><br><span class="line">stuct PersonInfo</span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> age;</span><br><span class="line">    <span class="type">int</span> salary;</span><br><span class="line">&#125;</span><br><span class="line">PersonInfo ZhangSan;      <span class="comment">//张三的信息</span></span><br><span class="line">ZhangSan.age    = <span class="number">30</span>;</span><br><span class="line">ZhangSan.salary = <span class="number">3000</span>;</span><br><span class="line">    </span><br><span class="line"><span class="comment">// code segment B</span></span><br><span class="line">std::pair&lt;<span class="type">int</span>, <span class="type">int</span>&gt; LiSi; <span class="comment">//李四的信息</span></span><br><span class="line">LiSi.first      = <span class="number">40</span>;     <span class="comment">//李四的年龄</span></span><br><span class="line">LiSi.second     = <span class="number">4000</span>;   <span class="comment">//李四的月薪</span></span><br></pre></td></tr></table></figure>
 
 
 
-<p>相比之下，代码A显然比代码B要易懂，<code>age</code>和<code>salary</code>变量名精确地表示了自身的含义，无需额外注释。</p>
-<p>因此，大多数情况下，我们不建议大家用<code>pair</code>替代两数据成员的结构体。</p>
-<p>那么，pair应该用于什么场合呢？</p>
+<p>显然，代码A比代码B要易理解，<code>age</code>和<code>salary</code>变量名精确地表示了自身的含义，无需额外注释。因此，大多数情况下，我们不建议大家用<code>pair</code>来替代包含两个数据成员的结构体。</p>
+<p>那么，<code>pair</code>应该在什么场合使用呢？</p>
 <ul>
-<li>第一种情况是，我们使用了第三方代码，第三方代码的接口要求我们使用<code>pair</code>，比如，我们在使用各种stl模块时。</li>
-<li>第二种情况是，我们写代码时，还不知道此结构体将用来存储怎样的具体数据，例如，我们要写自己容器模板代码。</li>
-<li>第三种情况是，我们想对结构体进行大小比较，但又不想自己重载对应的操作符。</li>
+<li>第一种情况是，我们使用了第三方代码时，接口要求我们使用<code>pair</code>，例如在使用各种<code>stl</code>模块时。</li>
+<li>第二种情况是，我们编写代码时，还不知道这个结构体将用来存储什么样的具体数据，例如，当我们编写自己的容器模板代码时。</li>
+<li>第三种情况是，我们想对结构体进行“比较大小”的操作，但又不想自己重载对应的操作符。</li>
 </ul>
-<p>第一种情况下，我们不得不用<code>pair</code>；第二种情况下，我们应该主动选用<code>pair</code>；第三种情况则应该尽量避免，除非我们真的能确保代码的混乱程度能被读者接受。</p>
+<p>第一种情况下，我们不得不用<code>pair</code>；第二种情况下，我们应该主动选用<code>pair</code>；而在第三种情况下，则应尽量避免使用，除非我们确信代码的混乱程度在可接受的范围内。</p>
 <h2 id="从pair到make-pair"><a href="#从pair到make-pair" class="headerlink" title="从pair到make_pair"></a>从pair到make_pair</h2><p>回到引子的问题吧，那个编译问题是由<code>make_pair</code>函数引起的。</p>
-<p>那么，<code>make_pair</code>又是怎样被引入<code>stl</code>的呢？</p>
-<p>考虑下面的代码</p>
-<p><code>std::pair&lt;int,int&gt; *pii = new std::pair&lt;int,int&gt; (10,20);</code>  </p>
-<p>怎么样？是不是有很多重复元素，淹没了重要信息？程序员们希望代码可以简单点，它们希望把重复的<code>&lt;int,int&gt;</code>去掉，有了<code>make_pair</code>,代码就能写成：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> std::pair;</span><br><span class="line"><span class="keyword">using</span> std::make_pair;</span><br><span class="line">pair&lt;<span class="type">int</span>,<span class="type">int</span>&gt; *pii = <span class="built_in">make_pair</span>(<span class="number">10</span>,<span class="number">20</span>);</span><br></pre></td></tr></table></figure>
+<p>让我们来看看<code>make_pair</code>的引入。</p>
+<p>考虑下面的代码(假设fun是一个接收特定pair参数的函数)：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">vector&lt;<span class="type">int</span>&gt; vi;</span><br><span class="line"><span class="built_in">fun</span>(pair&lt;vector&lt;<span class="type">int</span>&gt;::const_iterator,vector&lt;<span class="type">int</span>&gt;::const_iterator&gt; (vi.<span class="built_in">cbegin</span>(),vi.<span class="built_in">cend</span>());</span><br></pre></td></tr></table></figure>
 
-<p>相比之前哪个长长的版本，改后的代码更容易让人阅读时抓到重点，重点一是:指针<code>pii</code>指向一个<code>pair</code>，重点二是：它的两个元素分别是<code>10</code>和<code>20</code></p>
-<p>好了，我们有了对make_pair的需求，那么make_pair这个模板函数的具体接口应该怎么定义呢？</p>
-<h2 id="make-pair的演化"><a href="#make-pair的演化" class="headerlink" title="make_pair的演化"></a>make_pair的演化</h2><p>最早的时候，上个世纪（<code>C++</code>刚刚标准化的时候），大家是这么写的</p>
+<p>这段代码中<code>&lt;vector&lt;int&gt;::const_iterator,vector&lt;int&gt;::const_iterator&gt;</code>的出现让人觉得冗长，且掩盖了重要信息。程序员们希望代码能更简洁，于是<code>make_pair</code>应运而生，代码可以写成：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">vector&lt;<span class="type">int</span>&gt; vi;</span><br><span class="line"><span class="built_in">fun</span>(<span class="built_in">make_pair</span>(vi.<span class="built_in">cbegin</span>(),vi.<span class="built_in">cend</span>());</span><br></pre></td></tr></table></figure>
+
+<p>相比之前冗长的版本，修改后的代码更容易让人抓到重点，<code>fun</code>函数接收了一个<code>pair</code>参数，其两个元素分别是<code>vi.cbegin()</code>和<code>vi.cend()</code>。</p>
+<h2 id="make-pair的演化"><a href="#make-pair的演化" class="headerlink" title="make_pair的演化"></a>make_pair的演化</h2><p>让我们来看看<code>make_pair</code>的演化历程。</p>
+<p>最早，即上个世纪<code>C++</code>刚刚标准化时，<code>make_pair</code>的接口形式是：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T1, <span class="keyword">class</span> T2&gt;</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">pair&lt;T1, T2&gt; <span class="title">make_pair</span><span class="params">(<span class="type">const</span> T1 &amp;x, <span class="type">const</span> T2 &amp;y)</span></span>;</span><br></pre></td></tr></table></figure>
 
-<p>参数类型是<code>const &amp;</code>，这很好理解，因为这样可以避免不必要的拷贝嘛。</p>
-<p>但是，这样是有问题的，在上面的定义中，类似<code>make_pair(&quot;abc&quot;,3)</code>这样的代码就会无法通过编译，因为T1类型会被推断成<code>const char[4]</code>(而不是<code>const char *</code>),而<code>pair&lt;const char[4],int&gt;</code>，是不合法的，因为它的first类型无法拷贝。</p>
-<p>按我们的直觉，<code>make_pair(&quot;abc&quot;,3)</code>这样的代码“理应”返回<code>pair&lt;const char * ,int&gt;</code>才对。</p>
-<p>我们的直觉重要吗？当然重要！为此，本世纪初，<code>C++03</code>的标准给<code>make_pair</code>的接口打了个补丁，它变成了</p>
+<p>参数类型是<code>const &amp;</code>，这样可以避免不必要的拷贝。</p>
+<p>然而，这样的定义存在问题。例如，<code>make_pair(&quot;abc&quot;,3)</code>这样的代码就会无法通过编译，因为<code>T1</code>类型会被推断成<code>const char[4]</code>(而不是<code>const char *</code>)，而<code>pair&lt;const char[4],int&gt;</code>是不合法的，因为<code>first(T1)</code>类型无法拷贝。</p>
+<p>按我们的直觉，<code>make_pair(&quot;abc&quot;,3)</code>应该返回<code>pair&lt;const char * ,int&gt;</code>。我们的直觉重要吗？当然重要！因此，在本世纪初，<code>C++03</code>标准对<code>make_pair</code>的接口做了一个补丁，修改为:</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T1, <span class="keyword">class</span> T2&gt;</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">pair&lt;T1, T2&gt; <span class="title">make_pair</span><span class="params">(T1 &amp;x, T2 &amp;y)</span></span>;</span><br></pre></td></tr></table></figure>
 
-<p>代码效率低了，但<code>make_pair(&quot;abc&quot;,3)</code>这样代码总算能用了！！</p>
-<p>时代在进步，程序员们对效率又有了更高的要求。于是，<code>C++11</code>来了，带着右值引用等特性来了。</p>
-<p>make_pair乘着东风，再次变更了接口，兼顾了“直觉”和效率。它变成了</p>
+<p>这样，<code>make_pair(&quot;abc&quot;,3)</code>可以通过编译了，尽管理论上的代码执行效率有所降低。至于理论上的效率变低，标准还为此特意给编译器优化开了”绿灯“（这又是另外一个故事了，此处不再展开）。</p>
+<p>随着时代的发展，程序员们对效率提出了更高的要求。于是，<code>C++11</code>带来了着右值引用等特性。</p>
+<p><code>make_pair</code>顺势而为，再次变更了接口，兼顾了“直觉”和效率，变成了：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt; <span class="keyword">class</span> T1, <span class="keyword">class</span> T2 &gt;</span></span><br><span class="line"><span class="function">pair&lt;<span class="comment">/*V1*/</span>, <span class="comment">/*V2*/</span>&gt; <span class="title">make_pair</span><span class="params">( T1&amp;&amp; x, T2&amp;&amp; y )</span></span>;</span><br></pre></td></tr></table></figure>
 
-<p>哈哈，这挺好的，大部分代码都更高效了。</p>
-<p>不过，有极少数的人会觉得疑惑。还记的我们引子那部分的代码吗？我再贴一次</p>
+<p>这样，理论上大部分代码都更高效了。不过，极少数人可能会觉得困惑。还记得我们引子部分的代码吗？我再贴一次：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">void</span> <span class="title">fun</span><span class="params">(std::pair&lt;<span class="type">int</span> ,<span class="type">int</span>&gt;)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> v = <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(std::<span class="built_in">make_pair</span>&lt;<span class="type">int</span>,<span class="type">int</span>&gt;(v,<span class="number">6</span>));</span><br></pre></td></tr></table></figure>
 
-<p>这个代码，在上个世纪是ok的，在<code>C++11</code>之前也是没问题的，但更新到<code>C++11</code>之后，就要面临编译不过的问题，就要修改。</p>
-<p>当然，这是代码的问题，要怪就怪程序员代码写得不好，不能怪标准乱改变，具体原因我稍后再说。</p>
-<h2 id="从make-pair回归pair"><a href="#从make-pair回归pair" class="headerlink" title="从make_pair回归pair"></a>从make_pair回归pair</h2><p>我们把思路收回来，还记得我们引入make_pair的初心是什么吗？</p>
-<p>是为了让下面的代码能够简化，能够更易读：</p>
-<p><code>std::pair&lt;int,int&gt; *pii = new std::pair&lt;int,int&gt; (10,20);</code>  </p>
-<p>当我们能使用C++17标准时，由于模板构造函数也可以自动推导参数了，于是我们可以不借助<code>make_pair</code>，直接写写成：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> std::pair;</span><br><span class="line">pair&lt;<span class="type">int</span>,<span class="type">int</span>&gt; *pii = <span class="built_in">pair</span>(<span class="number">10</span>,<span class="number">20</span>);</span><br></pre></td></tr></table></figure>
+<p>这段代码在上个世纪是没有问题的，在<code>C++11</code>之前也没有没问题，但更新到<code>C++11</code>之后，就面临编译错误，就必须修改。</p>
+<p>当然，这是代码本身的问题，要怪就只能怪程序员写得不好，不能怪标准的变化。具体原因我稍后再详细说明。</p>
+<h2 id="从make-pair回归pair"><a href="#从make-pair回归pair" class="headerlink" title="从make_pair回归pair"></a>从make_pair回归pair</h2><p>让我们回到最初引入<code>make_pair</code>的目的：简化代码，使其更易写易读。</p>
+<p>例如让下面的代码变得更好读：</p>
+<p><code>fun(pair&lt;vector&lt;int&gt;::const_iterator,vector&lt;int&gt;::const_iterator&gt; (vi.cbegin(),vi.cend());</code>  </p>
+<p>当我们能使用C++17标准时，由于模板构造函数可以自动推导参数，我们不再需要借助<code>make_pair</code>，可以直接写成：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">fun</span>(<span class="built_in">pair</span>(vi.<span class="built_in">cbegin</span>(),vi.<span class="built_in">cend</span>());</span><br></pre></td></tr></table></figure>
 
-<p>怎么样？是不是更少干扰，更清晰，更接近人能读懂的语言了？</p>
-<p>是的，当我们的编译器支持<code>C++17</code>标准时，<code>make_pair</code>可以退出舞台了。</p>
-<p><code>make_pair</code>很好，但我们已经有了更好的替代品。</p>
-<h2 id="关于代码的好坏"><a href="#关于代码的好坏" class="headerlink" title="关于代码的好坏"></a>关于代码的好坏</h2><p>再次回到引子里的代码，为什么我说“要怪就怪程序员代码写得不好，不能怪标准乱改变”呢？</p>
-<p>因为写代码的人，他违背make_pair被创作出来的“本意”，<code>make_pair</code>的出现，本身就是为了减少一次模板参数的重复，而他居然还显式地写了一遍模板形参！</p>
-<p>对比一下，一个对代码整洁有追求的人，哪怕它在上个世纪，写出的代码也应该是这样的：</p>
+<p>这样，代码干扰更少，更清晰，也更接近自然语言的表达。</p>
+<p>是的，当我们的编译器支持<code>C++17</code>标准时，<code>make_pair</code>可以逐渐退出历史舞台了。<code>make_pair</code>很好，但我们已经有了更好的替代方案。</p>
+<h2 id="关于代码的好坏"><a href="#关于代码的好坏" class="headerlink" title="关于代码的好坏"></a>关于代码的好坏</h2><p>回到引子部分的代码，为什么我会说“要怪就只能怪程序员写得不好，不能怪标准的变化”呢？</p>
+<p>因为写那段代码的人，他违背了<code>make_pair</code>被创造的初衷，<code>make_pair</code>的出现，本来就是为了减少一次模板参数的重复，而他却显式地写了一遍模板形参！</p>
+<p>让我们对比一下，一个追求代码整洁有的程序员，哪怕在上个世纪，也会写出这样的代码：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">void</span> <span class="title">fun</span><span class="params">(std::pair&lt;<span class="type">int</span> ,<span class="type">int</span>&gt;)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> v = <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">//fun(std::make_pair&lt;int,int&gt;(v,6)); //有代码品味的程序员，会本能地发现这个“脱裤子放屁”的味道</span></span><br><span class="line"><span class="built_in">fun</span>(std::<span class="built_in">make_pair</span>(v,<span class="number">6</span>)); <span class="comment">//这才是简洁的代码，而且从c++98开始，直到20多年后的今天，都不会有编译问题</span></span><br></pre></td></tr></table></figure>
 
-<p>一个追求代码质量的人，哪怕他并不那么及时跟进语言标准的变化，问题也不太大。</p>
-<p>因为在大多数情况下，进化的标准会让他的原本就很好代码执行得更快。</p>
-<p>至于那些随着标准进化而变得不能用的代码，通常原来就很糟糕。</p>
-<p>语言标准的演进本质上是为了奖励优雅的代码，而不是为糟糕的代码兜底。</p>
-<p>写出简洁、清晰、符合本意的代码，才是程序员应有的追求。</p>
+<p>一个追求代码质量的人，即使不及时跟进语言标准的变化，也不会有太大问题。因为在大多数情况下，标准的进化会让原本就很好的代码运行得更快更好。</p>
+<p>至于那些随着标准进化而无法编译的代码，通常它们本身就很糟糕。</p>
+<p>语言标准的演进，本质上是在奖励优雅的代码(以及写代码的思路)，而不是为糟糕的代码提供避风港。写出简洁、清晰、符合本意的代码，才是程序员应有的追求。</p>
  
       <!-- reward -->
       
