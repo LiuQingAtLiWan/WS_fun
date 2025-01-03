@@ -130,10 +130,10 @@
 <h2 id="从pair到make-pair"><a href="#从pair到make-pair" class="headerlink" title="从pair到make_pair"></a>从pair到make_pair</h2><p>回到引子的问题吧，那个编译问题是由<code>make_pair</code>函数引起的。</p>
 <p>让我们来看看<code>make_pair</code>的引入。</p>
 <p>考虑下面的代码(假设fun是一个接收特定pair参数的函数)：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">vector&lt;<span class="type">int</span>&gt; vi;</span><br><span class="line"><span class="built_in">fun</span>(pair&lt;vector&lt;<span class="type">int</span>&gt;::const_iterator,vector&lt;<span class="type">int</span>&gt;::const_iterator&gt; (vi.<span class="built_in">cbegin</span>(),vi.<span class="built_in">cend</span>());</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">vector&lt;<span class="type">int</span>&gt; vi;</span><br><span class="line"><span class="built_in">fun</span>(pair&lt;vector&lt;<span class="type">int</span>&gt;::const_iterator,vector&lt;<span class="type">int</span>&gt;::const_iterator&gt; (vi.<span class="built_in">cbegin</span>(),vi.<span class="built_in">cend</span>()));</span><br></pre></td></tr></table></figure>
 
 <p>这段代码中<code>&lt;vector&lt;int&gt;::const_iterator,vector&lt;int&gt;::const_iterator&gt;</code>的出现让人觉得冗长，且掩盖了重要信息。程序员们希望代码能更简洁，于是<code>make_pair</code>应运而生，代码可以写成：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">vector&lt;<span class="type">int</span>&gt; vi;</span><br><span class="line"><span class="built_in">fun</span>(<span class="built_in">make_pair</span>(vi.<span class="built_in">cbegin</span>(),vi.<span class="built_in">cend</span>());</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">vector&lt;<span class="type">int</span>&gt; vi;</span><br><span class="line"><span class="built_in">fun</span>(<span class="built_in">make_pair</span>(vi.<span class="built_in">cbegin</span>(),vi.<span class="built_in">cend</span>()));</span><br></pre></td></tr></table></figure>
 
 <p>相比之前冗长的版本，修改后的代码更容易让人抓到重点，<code>fun</code>函数接收了一个<code>pair</code>参数，其两个元素分别是<code>vi.cbegin()</code>和<code>vi.cend()</code>。</p>
 <h2 id="make-pair的演化"><a href="#make-pair的演化" class="headerlink" title="make_pair的演化"></a>make_pair的演化</h2><p>让我们来看看<code>make_pair</code>的演化历程。</p>
@@ -159,7 +159,7 @@
 <p>例如让下面的代码变得更好读：</p>
 <p><code>fun(pair&lt;vector&lt;int&gt;::const_iterator,vector&lt;int&gt;::const_iterator&gt; (vi.cbegin(),vi.cend());</code>  </p>
 <p>当我们能使用C++17标准时，由于模板构造函数可以自动推导参数，我们不再需要借助<code>make_pair</code>，可以直接写成：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">fun</span>(<span class="built_in">pair</span>(vi.<span class="built_in">cbegin</span>(),vi.<span class="built_in">cend</span>());</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">fun</span>(<span class="built_in">pair</span>(vi.<span class="built_in">cbegin</span>(),vi.<span class="built_in">cend</span>()));</span><br></pre></td></tr></table></figure>
 
 <p>这样，代码干扰更少，更清晰，也更接近自然语言的表达。</p>
 <p>是的，当我们的编译器支持<code>C++17</code>标准时，<code>make_pair</code>可以逐渐退出历史舞台了。<code>make_pair</code>很好，但我们已经有了更好的替代方案。</p>
