@@ -104,7 +104,7 @@
   
     <div class="article-entry" itemprop="articleBody">
        
-  <h2 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h2><p>故事的开端，是意味朋友将老代码迁移到C++11标准时遭遇了编译错误。他的代码大致如下：</p>
+  <h2 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h2><p>故事的开端，是一位朋友将老代码迁移到C++11标准时遭遇了编译错误。他的代码大致如下：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">void</span> <span class="title">fun</span><span class="params">(std::pair&lt;<span class="type">int</span> ,<span class="type">int</span>&gt;)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> v = <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(std::<span class="built_in">make_pair</span>&lt;<span class="type">int</span>,<span class="type">int</span>&gt;(v,<span class="number">6</span>));</span><br></pre></td></tr></table></figure>
 <p>编译器抛出了错误：</p>
 <blockquote>
