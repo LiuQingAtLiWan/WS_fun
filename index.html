@@ -104,7 +104,7 @@
   
 <div class="notice" style="margin-top:50px">
     <i class="ri-heart-fill"></i>
-    <div class="notice-content">铁路桥刚刚开工，待完善，下一步计划更新一篇博客，文章引用本站内部链接。</div>
+    <div class="notice-content">待完善，下一步规划中(也许要换个稳定图床)。</div>
 </div>
 
 
@@ -141,6 +141,133 @@
     
     
     <article
+  id="post-98or03"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h2 itemprop="name">
+  <a class="article-title" href="/2025/02/04/98or03/"
+    >c++98还是03？</a> 
+</h2>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/2025/02/04/98or03/" class="article-date">
+  <time datetime="2025-02-04T04:01:04.000Z" itemprop="datePublished">2025-02-04</time>
+</a>    
+    </div>
+      
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h4 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h4><p>事情是这样的，有朋友看了我之前的文章(<a href="/2024/12/30/talk-about-pair/" title="漫谈pair">见此</a>)后，提出了一个问题——</p>
+<p>按文章中的说法：</p>
+<blockquote>
+<p>最早，即上个世纪<code>C++</code>刚刚标准化时，<code>make_pair</code>的接口形式是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T1, <span class="keyword">class</span> T2&gt;</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">pair&lt;T1, T2&gt; <span class="title">make_pair</span><span class="params">(<span class="type">const</span> T1 &amp;x, <span class="type">const</span> T2 &amp;y)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>参数类型是<code>const &amp;</code>，这样可以避免不必要的拷贝。</p>
+<p>然而，这样的定义存在问题。例如，<code>make_pair(&quot;abc&quot;,3)</code>这样的代码就会无法通过编译，因为<code>T1</code>类型会被推断成<code>const char[4]</code>(而不是<code>const char *</code>)，而<code>pair&lt;const char[4],int&gt;</code>是不合法的，因为<code>first(T1)</code>类型无法拷贝。</p>
+</blockquote>
+<p>他为了验证这一说法，特意写了一段<a target="_blank" rel="noopener" href="https://coliru.stacked-crooked.com/a/cb87ce1f756dc94a">代码</a>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;utility&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>,std::<span class="built_in">make_pair</span>(<span class="string">&quot;abc&quot;</span>,<span class="number">3</span>).first);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//g++ -std=c++98 -O0 -Wall -pedantic main.cpp &amp;&amp; ./a.out</span></span><br></pre></td></tr></table></figure>
+
+<p>以上代码在指定 <code>-std=c++98</code> 选项的情况下，可以顺利通过编译，并未出现我文章中所说的问题。</p>
+<p>按理说，这段代码应该要到 C++03 之后才能编译通过，可为什么在指定 <code>-std=c++98</code> 时依然没有问题呢？</p>
+<h4 id="std-c-98到底意味着什么"><a href="#std-c-98到底意味着什么" class="headerlink" title="-std=c++98到底意味着什么"></a><code>-std=c++98</code>到底意味着什么</h4><p>我们先来看看 GCC 的<a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gcc/Standards.html">官网</a>是怎么说的：</p>
+<blockquote>
+<p>The original ISO C++ standard was published as the ISO standard (ISO&#x2F;IEC 14882:1998) and amended by a Technical Corrigenda published in 2003 (ISO&#x2F;IEC 14882:2003). These standards are referred to as C++98 and C++03, respectively. GCC implements the majority of C++98 (<code>export</code> is a notable exception) and most of the changes in C++03. To select this standard in GCC, use one of the options -ansi, -std&#x3D;c++98, or -std&#x3D;c++03; to obtain all the diagnostics required by the standard, you should also specify -pedantic (or -pedantic-errors if you want them to be errors rather than warnings).</p>
+</blockquote>
+<p>再看看 Clang <a target="_blank" rel="noopener" href="https://clang.llvm.org/cxx_status.html">官网</a>的说法：</p>
+<blockquote>
+<p>Clang implements the following published and upcoming ISO C++ standards:</p>
+<table>
+<thead>
+<tr>
+<th>Language Standard</th>
+<th>Flag</th>
+<th>Available in Clang?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a target="_blank" rel="noopener" href="https://clang.llvm.org/cxx_status.html#cxx26">C++2c</a></td>
+<td><code>-std=c++2c</code></td>
+<td>Partial</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://clang.llvm.org/cxx_status.html#cxx23">C++23</a></td>
+<td><code>-std=c++23</code></td>
+<td>Partial</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://clang.llvm.org/cxx_status.html#cxx20">C++20</a></td>
+<td><code>-std=c++20</code></td>
+<td>Partial</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://clang.llvm.org/cxx_status.html#cxx17">C++17</a></td>
+<td><code>-std=c++17</code></td>
+<td>Clang 5</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://clang.llvm.org/cxx_status.html#cxx14">C++14</a></td>
+<td><code>-std=c++14</code></td>
+<td>Clang 3.4</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://clang.llvm.org/cxx_status.html#cxx11">C++11</a></td>
+<td><code>-std=c++11</code></td>
+<td>Clang 3.3</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://clang.llvm.org/cxx_status.html#cxx98">C++98 &#x2F; C++03</a></td>
+<td><code>-std=c++98</code></td>
+<td>Yes (other than <code>export</code>)</td>
+</tr>
+</tbody></table>
+</blockquote>
+<p>从这两大主流编译器的文档可以看出，<strong>指定 <code>-std=c++98</code>，实际上编译器是按 C++03 的标准来编译代码的</strong>。</p>
+<h3 id="如何真正复现-C-98-的行为？"><a href="#如何真正复现-C-98-的行为？" class="headerlink" title="如何真正复现 C++98 的行为？"></a>如何真正复现 C++98 的行为？</h3><p>在现代构建环境下，想要复现我上篇文章中提到的问题，是不太可行的。但如果使用 1998 年至 2003 年间流行的环境，比如微软的 VC6，就可以观察到这一现象。在 VC6 环境下，我那位朋友的代码会按预期出现编译错误：</p>
+<blockquote>
+<p>Compiling…<br>test.cpp<br>c:\program files\microsoft visual studio\vc98\include\utility(21) : error C2536: ‘std::pair&lt;char [4],int&gt;::first’ : cannot specify explicit initializer for arrays<br>        c:\program files\microsoft visual studio\vc98\include\utility(25) : see declaration of ‘first’<br>        c:\program files\microsoft visual studio\vc98\include\utility(21) : while compiling class-template member function ‘__thiscall std::pair&lt;char [4],int&gt;::std::pair&lt;char [4],int&gt;(const char (&amp;)[4],const int &amp;)’<br>Error executing cl.exe.</p>
+</blockquote>
+<p>当然，也可能有人会反驳：<strong>VC6 本身对 C++98 标准库的支持就不够好，这个验证并不严谨</strong>。</p>
+<p>这倒也简单，我们可以用当年的 STLport 替换 VC6 自带的标准库，使其符合当时的 C++98 规范。经过测试，结果依旧一致，代码仍然会在编译时报错。在此就不再赘述了。</p>
+<h4 id="03标准之于98标准的意义"><a href="#03标准之于98标准的意义" class="headerlink" title="03标准之于98标准的意义"></a>03标准之于98标准的意义</h4><p>与 1998 年的标准（ISO&#x2F;IEC 14882:1998）相比，C++03（ISO&#x2F;IEC 14882:2003）几乎没有引入新的特性，而是修正了 C++98 的一些缺陷。例如，之前文章提到的 <code>pair</code> 签名调整，以及 <code>vector</code> 中元素必须连续存储的规定等等。</p>
+<p>对于开发者来说，C++03 不是一个“新标准”，而更像是 C++98 的终极形态，一个更加完善的 C++98。</p>
+<p>正因如此，GCC、Clang 等编译器才会采取这种“挂羊头卖狗肉”的行为——<strong>你要求 C++98，我就给你 C++03</strong>。</p>
+<h4 id="在专业领域，切勿望文生义"><a href="#在专业领域，切勿望文生义" class="headerlink" title="在专业领域，切勿望文生义"></a>在专业领域，切勿望文生义</h4><p><code>-std=c++98</code> 并不意味着编译器会严格按照 1998 年的标准来编译 C++ 代码。这种“文意相左”的现象在其他领域也不少见，比如鲸鱼不是鱼，阿拉伯数字并非阿拉伯人发明，书记的工作并不是书写与记录，等等。</p>
+<p>望文生义，在有些时候是不准确的。在自己的专业领域，更需要时刻提醒自己这一点。</p>
+ 
+      <!-- reward -->
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/coding/" rel="tag">coding</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/essays/" rel="tag">essays</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+   
+  
+</article>
+
+    
+    <article
   id="post-the-great-gatsby"
   class="article article-type-post"
   itemscope
@@ -168,7 +295,7 @@
       
     <div class="article-entry" itemprop="articleBody">
        
-  <h2 id="盖茨比有多了不起"><a href="#盖茨比有多了不起" class="headerlink" title="盖茨比有多了不起?"></a>盖茨比有多了不起?</h2><p>我没看过《了不起的盖茨比》的原著，只是常常在各种地方看到人们引用其中的名言——</p>
+  <p>我没看过《了不起的盖茨比》的原著，只是常常在各种地方看到人们引用其中的名言——</p>
 <blockquote>
 <p>每逢你想要批评任何人的时候，要记住，这个世界上并非所有人，都拥有你所拥有的那些优势。</p>
 </blockquote>
@@ -199,7 +326,7 @@
     
     <footer class="article-footer">
        
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/video/" rel="tag">video</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/essays/" rel="tag">essays</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/video/" rel="tag">video</a></li></ul>
 
     </footer>
   </div>
