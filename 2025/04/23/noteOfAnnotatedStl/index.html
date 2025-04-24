@@ -80,7 +80,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">2.4k</span>
+            <span class="post-count">2.3k</span>
         </span>
     </span>
 
@@ -89,7 +89,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">9 分钟</span>
+            <span class="post-count">8 分钟</span>
         </span>
     </span>
 </div>
@@ -104,65 +104,65 @@
   
     <div class="article-entry" itemprop="articleBody">
        
-  <h2 id="STL源码剖析勘误"><a href="#STL源码剖析勘误" class="headerlink" title="STL源码剖析勘误"></a>STL源码剖析勘误</h2><p>最近抽空，读完了当年只读了一半的书——《STL源码剖析》。</p>
-<p>之前读过很多侯先生的译作，获益良多。但侯先生自己写书时，似乎没有译书时那么用心，多处都有表述不清，或与事实不符的地方。记录如下</p>
+  <h2 id="STL源码剖析勘误"><a href="#STL源码剖析勘误" class="headerlink" title="STL源码剖析勘误"></a>STL源码剖析勘误</h2><p>最近抽空读完了《STL源码剖析》，补上了当年只读一半的遗憾。</p>
+<p>之前读过很多侯先生翻译的书，获益良多。但这本他亲自撰写的书，行文中却显得有些疏漏，不如他译作时那般细致。行文中有不少表述不清或与事实不符之处，略作记录如下。</p>
 <ul>
 <li><h5 id="对预定义宏的疑惑"><a href="#对预定义宏的疑惑" class="headerlink" title="对预定义宏的疑惑"></a>对预定义宏的疑惑</h5></li>
 </ul>
-<p> 在原书23页，有以下代码代码注释</p>
+<p> 在原书23页，有以下代码代码片段与注释</p>
 <blockquote>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __STL_NEED_TYPENAME</span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> typename <span class="comment">// 侯捷： 难道不该 #define typename class 吗？</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
 </blockquote>
-<p> 此处，还真<strong>不应该 <code>#define typename class</code></strong>,激活此宏，是为了适配部分老旧编译器（如gcc1.x）。在那些编译器中，<code>typename</code>并不是关键字,在这些编译器里，下面这种标准的写法无法通过编译：</p>
+<p>侯先生的注释其实是误会了。这个宏的作用是在某些古老的编译器（如 gcc2.7）中，<strong>将 <code>typename</code> 这个当时还不是关键字的词“空气化”，从而避免标准写法编译失败</strong>：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typename</span> iterator_traits&lt;InputIterator&gt;::value_type value;</span><br></pre></td></tr></table></figure>
 
-<p>反倒是下面的非标准写法能通过编译：</p>
+<p>这些老编译器无法识别上述写法，而如下的非标准写法却可以通过：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">iterator_traits&lt;InputIterator&gt;::value_type value;</span><br></pre></td></tr></table></figure>
 
-<p>为了兼容标准的和老旧的编译器，我们就需要在识别到旧编译器时，通过宏，将<code>typename</code>“空气化”，即</p>
+<p>为兼容标准与老编译器，才需要通过宏将 <code>typename</code> 变为空。即</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __STL_NEED_TYPENAME <span class="comment">//如果是上古编译器，此宏会被定义</span></span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> typename <span class="comment">// 此时源码里面写typename时，等于什么也不写</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
 
-<p>侯先生想当然地觉得应该<code> #define typename class</code>,大概是他以为源码中会有以下的写法:</p>
+<p>侯先生大概以为源码中会有如下写法：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span> U&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">()</span></span>&#123;&#125;;</span><br></pre></td></tr></table></figure>
 
-<p>如果<code>typename</code>不是关键字，那么确实应该将它们换成<code>class</code>.但事实上，sgi stl里并没有这样的写法，源码中所有的模版变量都是用<code>class</code>声明的，既然没有写成<code>typename</code>，也就无需用宏来替换。</p>
+<p>若真如此，则在老旧编译器中需改为 <code>class</code>。但 SGI STL 中，模板声明一律用 <code>class</code>，并无 <code>typename</code> 的使用，自然也无需替换。</p>
 <hr>
 <ul>
-<li><h5 id="误认为distance函数与output-iterator可以兼容"><a href="#误认为distance函数与output-iterator可以兼容" class="headerlink" title="误认为distance函数与output iterator可以兼容"></a>误认为distance函数与output iterator可以兼容</h5>在原书第99页提到</li>
+<li><h5 id="误以为distance可接收-output-iterator"><a href="#误以为distance可接收-output-iterator" class="headerlink" title="误以为distance可接收 output iterator"></a>误以为<code>distance</code>可接收 output iterator</h5>第 99 页：</li>
 </ul>
 <blockquote>
 <p>换句话说，当客端调用distance()并使用output iterator或forward iterator 或者 bidirectional iterator时，统统都会传递调用input iterator的那个__distance()函数。</p>
 </blockquote>
-<p>作者这里是想当然了，事实上，因为output iterator不保证支持++操作，所以distance函数不能以它为参数。<strong>当客端调用distance()时，是不能使用output iterator的。</strong></p>
+<p>这是想当然的说法。事实上，<strong>output iterator 连最基本的 <code>++</code> 操作都无法保证支持</strong>，根本不能作为 <code>distance</code> 的参数。标准库对此有限制。</p>
 <hr>
 <ul>
-<li><h5 id="对vector-insert-aux的疑惑"><a href="#对vector-insert-aux的疑惑" class="headerlink" title="对vector::insert_aux的疑惑"></a>对vector::insert_aux的疑惑</h5></li>
+<li><h5 id="误读-vector-insert-aux-的复制逻辑"><a href="#误读-vector-insert-aux-的复制逻辑" class="headerlink" title="误读 vector::insert_aux 的复制逻辑"></a>误读 <code>vector::insert_aux</code> 的复制逻辑</h5></li>
 </ul>
-<p> 在原书122页到123页中，有代码</p>
+<p>第 122–123 页中有如下代码：</p>
 <blockquote>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span>｛</span><br><span class="line">    <span class="comment">//将原vector的内容拷贝到新vector</span></span><br><span class="line">    new_finish = <span class="built_in">uninitialized_copy</span>(start, position, new_start);</span><br><span class="line">    <span class="comment">//为新元素设定初值x</span></span><br><span class="line">    <span class="built_in">construct</span>(new_finish,x);</span><br><span class="line">    <span class="comment">//调整水位</span></span><br><span class="line">    ++new_finish;</span><br><span class="line">    <span class="comment">//将原vector的备用空间中的内容也忠实拷贝过来（侯捷疑惑，啥用途？）</span></span><br><span class="line">    new_finish = <span class="built_in">uninitialized_copy</span>(position, finish，new_finish);</span><br><span class="line">   ｝</span><br></pre></td></tr></table></figure>
 </blockquote>
-<p> 此处，<strong>作者将insert_aux函数误认为push_back</strong> ，以为<code>[position, finish)</code>是原vector的备用空间内容，因而有了疑惑。事实上，它应该是原vector插入点之后的有效内容，拷贝操作是必须的。</p>
+<p>侯先生将 <code>[position, finish)</code> 误认为是“备用空间”，其实这是插入点之后的有效元素，<strong>复制操作不可省略</strong>。</p>
 <hr>
 <ul>
-<li><h5 id="代码笔误"><a href="#代码笔误" class="headerlink" title="代码笔误"></a>代码笔误</h5></li>
+<li><h5 id="代码笔误：错误判断迭代器是否越界"><a href="#代码笔误：错误判断迭代器是否越界" class="headerlink" title="代码笔误：错误判断迭代器是否越界"></a>代码笔误：错误判断迭代器是否越界</h5></li>
 </ul>
-<p> 在原书的138页，作者给了一段示例代码</p>
+<p>第 138 页：</p>
 <blockquote>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ite = <span class="built_in">find</span>(ilist.<span class="built_in">begin</span>(), ilist.<span class="built_in">end</span>(), <span class="number">1</span>);</span><br><span class="line"><span class="keyword">if</span> (ite!=<span class="number">0</span>)</span><br><span class="line">    cout &lt;&lt; *(ilist.<span class="built_in">erase</span>(ite)) &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
 </blockquote>
-<p>此处是<strong>明显的笔误</strong>，<code>if (ite!=0)</code>应该是<code>if (ite!=ilist.end())</code>才对。</p>
+<p><code>ite != 0</code> 显然错误，应为 <code>ite != ilist.end()</code>。</p>
 <hr>
 <ul>
-<li><h5 id="对list的sort算法类型错误归类"><a href="#对list的sort算法类型错误归类" class="headerlink" title="对list的sort算法类型错误归类"></a>对list的sort算法类型错误归类</h5>原书142页，有如下代码注释</li>
+<li><h5 id="对list的sort算法类型错误归类"><a href="#对list的sort算法类型错误归类" class="headerlink" title="对list的sort算法类型错误归类"></a>对list的sort算法类型错误归类</h5>第 142 页：</li>
 </ul>
 <blockquote>
  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//本函数采用quick sort</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">T</span>, <span class="keyword">class</span> <span class="title class_">Alloc</span>&gt;</span><br><span class="line"><span class="type">void</span> list&lt;T, Alloc&gt;::<span class="built_in">sort</span>()&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 </blockquote>
-<p>  list无法提供随机访问的功能，它不满足快速quick sort的要求，哪怕在内部实现也不行。<strong>其实，list内部使用了一种巧妙的归并排序</strong>。</p>
+<p><code>list</code> 不支持随机访问，因此并不适合使用快速排序。<strong>在list内部，SGI STL 实际采用的是一种简洁高效的归并排序</strong>。</p>
 <hr>
 <ul>
-<li><h5 id="对-adjust-heap函数的误解"><a href="#对-adjust-heap函数的误解" class="headerlink" title="对__adjust_heap函数的误解"></a>对__adjust_heap函数的误解</h5></li>
+<li><h5 id="误解-adjust-heap-的行为"><a href="#误解-adjust-heap-的行为" class="headerlink" title="误解 __adjust_heap 的行为"></a>误解 <code>__adjust_heap</code> 的行为</h5></li>
 </ul>
 <p>在原书的178页，有如下注释</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(secondChild == len)&#123; <span class="comment">// 没有右子节点，只有左子节点</span></span><br><span class="line">    <span class="comment">// Percolate down: 令左子值为洞值，再令洞号下移至左子节点处。</span></span><br><span class="line">    *(first + holeIndex) = *(first + (secondChild - <span class="number">1</span>));</span><br><span class="line">    holeIndex = secondChild - <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 将欲调整值填入目前的洞号内。注意，此时肯定满足次序特性</span></span><br><span class="line"><span class="comment">// 依侯捷只见，下面直接改为*(first + holeIndex) = value; 应该可以</span></span><br><span class="line">__push_heap(first, holeIndex, topIndex, value);</span><br></pre></td></tr></table></figure>
@@ -171,7 +171,7 @@
 <p>反面例子很容易构造，将176页heap内的31替换成35,24替换成33，即可验证。</p>
 <hr>
 <ul>
-<li><h5 id="对红黑树插入情况的讨论不全面"><a href="#对红黑树插入情况的讨论不全面" class="headerlink" title="对红黑树插入情况的讨论不全面"></a>对红黑树插入情况的讨论不全面</h5></li>
+<li><h5 id="红黑树插入分析遗漏一种情况"><a href="#红黑树插入分析遗漏一种情况" class="headerlink" title="红黑树插入分析遗漏一种情况"></a>红黑树插入分析遗漏一种情况</h5></li>
 </ul>
 <p>原书210页到211页，作者讨论了红黑树插入新节点后，树结构被破坏的四种情况，分别是</p>
 <ol>
@@ -183,33 +183,37 @@
 <p>显然，<strong>作者没有分析s为红且X为内侧插入这种情况</strong>，如果出现这种情况，可以先按情况2方案处理，处理之后就会转化成情况3或者情况4。</p>
 <hr>
 <ul>
-<li><h5 id="对红黑树重新平衡的调整过程描述错误"><a href="#对红黑树重新平衡的调整过程描述错误" class="headerlink" title="对红黑树重新平衡的调整过程描述错误"></a>对红黑树重新平衡的调整过程描述错误</h5></li>
+<li><h5 id="对“由上而下”的理解错误"><a href="#对“由上而下”的理解错误" class="headerlink" title="对“由上而下”的理解错误"></a>对“由上而下”的理解错误</h5></li>
 </ul>
 <p>原书212页提到</p>
 <blockquote>
 <p>5.2.2 一个由上而下的程序</p>
 </blockquote>
 <p>并配了图解析。</p>
-<p>但实际上，参考225页的源码就知道，<strong>所谓“由上而下”，并不是如作者所述的那样，它不是从根部往下处理</strong>，它的“由上而下”只体现在<strong>待平衡点X和它祖父节点G之间的局部</strong>，整体而言，这仍是从下而上的流程。</p>
+<p>但实际上，参考225页的源码就知道，<strong>所谓“由上而下”，并不是如作者所述的那样，它不是从根部往下处理</strong>，它的“由上而下”只体现在<strong>待平衡点X和它祖父节点G之间的局部</strong>，整体而言，这仍是自底向上的流程。先局部处理插入点到“它祖父”之间的关系，再向上处理“它祖父”到“它祖父的祖父”的关系，以此类推。</p>
 <p>另外，此处还有明显笔误，“但是如果A的父节点P亦为红色”，这里的“A”应该是X。</p>
 <hr>
 <ul>
-<li><h5 id="对红黑树-insert函数参数的错误注释"><a href="#对红黑树-insert函数参数的错误注释" class="headerlink" title="对红黑树__insert函数参数的错误注释"></a>对红黑树__insert函数参数的错误注释</h5>原书224页，有这样的注释代码</li>
+<li><h5 id="红黑树-insert-的参数注释错误"><a href="#红黑树-insert-的参数注释错误" class="headerlink" title="红黑树__insert 的参数注释错误"></a>红黑树__insert 的参数注释错误</h5>第 224 页：</li>
 </ul>
 <blockquote>
  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Key</span>, <span class="keyword">class</span> <span class="title class_">Value</span>, <span class="keyword">class</span> <span class="title class_">KeyOfValue</span>, <span class="keyword">class</span> <span class="title class_">Compare</span>, <span class="keyword">class</span> <span class="title class_">Alloc</span>&gt;</span><br><span class="line"><span class="keyword">typename</span> rb_tree&lt;Key, Value, KeyOfValue, compare, Alloc&gt;::iterator</span><br><span class="line">rb_tree&lt;Key, Value, KeyOfValue, compare, Alloc&gt;::</span><br><span class="line">  __insert(base_ptr x_, base_ptr y_, <span class="type">const</span> Value&amp; v)&#123;</span><br><span class="line">  <span class="comment">//参数x_为新值插入点，参数y_为插入点之父节点，参数v为新值    </span></span><br><span class="line">      <span class="comment">//...</span></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
 </blockquote>
-<p>  <strong>“参数x_为新值插入点”这个说法与事实不符</strong>，看后面的源码可以发现，新值插入点是函数内部生成的<code>z = create_node(v);</code>，至于<code>x_</code>，从外部调用看，它只可能是<code>null</code>或者与<code>y_</code>相等。</p>
+<p>  <strong>“参数x_为新值插入点”这个说法与事实不符</strong>，看后面的源码可以发现，实际插入点由函数内部创建的 <code>z = create_node(v)</code> 决定。<code>x_</code> 更多表示当前位置参考，或空节点。</p>
 <hr>
 <ul>
-<li><h5 id="未理解源码中使用辅助函数的动机"><a href="#未理解源码中使用辅助函数的动机" class="headerlink" title="未理解源码中使用辅助函数的动机"></a>未理解源码中使用辅助函数的动机</h5>原书300页，有这样的注释</li>
+<li><h5 id="未理解使用辅助函数的目的"><a href="#未理解使用辅助函数的目的" class="headerlink" title="未理解使用辅助函数的目的"></a>未理解使用辅助函数的目的</h5>第 300 页：</li>
 </ul>
 <blockquote>
  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> InputIterator, <span class="keyword">class</span> OutputIterator&gt;</span></span><br><span class="line"><span class="function">OutputIterator <span class="title">adjacent_difference</span><span class="params">(InputIterator first, InputIterator last, OutputIterator result)</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(fisrt == last) <span class="keyword">return</span> result;</span><br><span class="line">    *result = *first; <span class="comment">//首先记录第一个元素</span></span><br><span class="line">    <span class="keyword">return</span> __adjacent_difference(fisrt, last, result, <span class="built_in">value_type</span>(first));</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//侯捷认为(并经证实)，不需像上行那样传递调用，可改用以下写法(正个函数)</span></span><br><span class="line">    <span class="comment">//if(fisrt == last) return result;</span></span><br><span class="line">    <span class="comment">//*result = *first;</span></span><br><span class="line">    <span class="comment">//iterator_traits&lt;InputIterator&gt;::value_type value = *first;</span></span><br><span class="line">    <span class="comment">//while (++first != last)&#123; //走过整个区间</span></span><br><span class="line">    <span class="comment">// ...以下同__adjacent_difference()的对应内容    </span></span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 </blockquote>
-<p>事实上，<code>iterator_traits&lt;InputIterator&gt;::value_type value = *first;</code><strong>这样的写法是不符合c++标准的</strong>，标准的写法是<code>typename iterator_traits&lt;InputIterator&gt;::value_type value = *first</code>,如果侯先生真验证了这个写法，那么他验证时，用的应该是一个未符合标准的编译器。</p>
-<p>此外，类似<code>iterator_traits&lt;InputIterator&gt;::value_type value = *first</code><strong>这样的代码信息密度低，并不利于阅读</strong>，远不如原本代码里<code>value_type(first)</code>这样的表达来得简洁，清晰。</p>
-<p>总而言之，此处作者<strong>并未理解源码中使用辅助函数的动机，并给了一个不符合c++规范的替代方案</strong>。实际上，这个替代方案更糟糕。</p>
+<p>侯先生推荐以下写法：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">iterator_traits&lt;InputIterator&gt;::value_type value = *first;`</span><br></pre></td></tr></table></figure>
+<p>事实上，<strong>这样的写法是不符合c++标准的</strong>，标准的写法是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typename</span> iterator_traits&lt;InputIterator&gt;::value_type value = *first;</span><br></pre></td></tr></table></figure>
+<p>若侯先生确曾验证该写法，可能当时所用编译器并未严格遵循标准。</p>
+<p>此外，类似<code>iterator_traits&lt;InputIterator&gt;::value_type value = *first</code><strong>这种写法表达冗长，不如原代码那样清晰简洁</strong>。原来的<code>value_type(first)</code>简短而精确。</p>
+<p>总而言之，此处作者<strong>并未理解源码中使用辅助函数的动机，并给了一个不符合c++规范的替代方案</strong>。实际上，这个替代方案更繁琐，晦涩。</p>
 <hr>
 <ul>
 <li><h5 id="未深究iota名字的含义"><a href="#未深究iota名字的含义" class="headerlink" title="未深究iota名字的含义"></a>未深究iota名字的含义</h5></li>
@@ -218,34 +222,36 @@
 <blockquote>
  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 侯捷： itoa是什么的缩写</span></span><br><span class="line"><span class="comment">// 函数意义：在[first, last)区间内填入value, value+1, value+2...</span></span><br><span class="line">  <span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">ForwardIterator</span>, <span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line">  <span class="function"><span class="type">void</span> <span class="title">iota</span><span class="params">(ForwardIterator first, ForwardIterator last, T value)</span></span>&#123;</span><br><span class="line">      <span class="keyword">while</span>(first != last) *first++ = value++;</span><br><span class="line">    &#125;</span><br><span class="line">  </span><br></pre></td></tr></table></figure>
 </blockquote>
-<p>iota并不是什么东西的缩写，它就代表第九个希腊字母（ι，中文读<strong>约塔</strong>），这个函数的命名，源自另一个编程语言——APL。</p>
+<p>其实 <code>iota</code> 是希腊字母“ι”，来源于编程语言 APL，并不是什么词组的缩写。</p>
 <hr>
 <ul>
 <li><h5 id="对nth-element的描述不严谨"><a href="#对nth-element的描述不严谨" class="headerlink" title="对nth_element的描述不严谨"></a>对nth_element的描述不严谨</h5></li>
 </ul>
-<p>原书374页，有这样的注释</p>
+<p>第 374 页：</p>
 <blockquote>
  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 将小于*(iv.begin() + 5)(本例为40)的元素置于该元素之左</span></span><br><span class="line"><span class="comment">// 其余元素之于该元素之右，不保证维持原有的相对位置</span></span><br><span class="line"><span class="built_in">nth_element</span>(iv.<span class="built_in">begin</span>(), iv.<span class="built_in">begin</span>()<span class="number">+5</span>, iv.<span class="built_in">end</span>());</span><br><span class="line"><span class="built_in">copy</span>(iv.<span class="built_in">begin</span>(), iv.<span class="built_in">end</span>(), <span class="built_in">ostream_iterator</span>&lt;<span class="type">int</span>&gt;(cout, <span class="string">&quot; &quot;</span>));</span><br><span class="line">cout&lt;&lt;endl; <span class="comment">//20 12 22 17 17 22 23 30 30 33 40</span></span><br></pre></td></tr></table></figure>
 </blockquote>
 <p><strong>(本例是40)描述不对</strong>，正确的元素是序列第（5+1）大元素，本例里应该是22。</p>
-<p>同类不严谨甚至可算作错误的描述，也出现在原书409页。</p>
+<p>类似的表述错误也出现在原书409页。</p>
 <hr>
 <ul>
 <li><h5 id="对插入排序的描述与事实不符"><a href="#对插入排序的描述与事实不符" class="headerlink" title="对插入排序的描述与事实不符"></a>对插入排序的描述与事实不符</h5></li>
 </ul>
-<p>原书390页，侯先生写道</p>
+<p>第 390 页：</p>
 <blockquote>
-<p>insertion Sort以双层循环的形式进行。外循环遍历整个序列，每次迭代决定出一个子区间：内层循环遍历子区间，将子区间的每一个“逆转对(inversion)”倒转过来。所谓“逆转对”是值任何两个迭代器 i, j, i &lt;j 而 *i &gt; *j。一旦不存在“逆转对”，序列即排序完毕。</p>
+<p>insertion Sort以双层循环的形式进行。外循环遍历整个序列，每次迭代决定出一个子区间：内层循环遍历子区间，将子区间的每一个“逆转对(inversion)”倒转过来。所谓“逆转对”是值任何两个迭代器<code> i, j</code>, <code>i &lt;j</code> 而 <code>*i &gt; *j</code>。一旦不存在“逆转对”，序列即排序完毕。</p>
 </blockquote>
-<p>显然，上面描述的是冒泡排序而不是插入排序。在392页对<code>__unguarded_inear_insert</code>函数做注释时，也错误地将“平移”操作注释成“消除逆转对”。</p>
+<p>显然，上面描述的是冒泡排序而不是插入排序。</p>
+<p>在392页对<code>__unguarded_inear_insert</code>函数做注释时，侯先生也错误地将“平移”操作注释成“消除逆转对”。</p>
 <hr>
 <ul>
 <li><h5 id="可以写得更好的地方"><a href="#可以写得更好的地方" class="headerlink" title="可以写得更好的地方"></a><strong>可以写得更好的地方</strong></h5></li>
 </ul>
-<p>此外，书中还有其他不算错误，但可以写得更好的地方。</p>
-<p>比如，algorithm部分的介绍按字典序（而不是按功能归类这种更好的方式）；又比如，部分函数注释只讲了“做什么”而没有讲“为什么”；再比如，对红黑树的理论基本没有讨论，还有一处我觉得挺可惜的——对<code>__rotate_cycle</code>的随机迭代器版本只贴源码毫无解释（本可借此引出美妙的数学同余关系），等等等等。</p>
+<p>此外，书中还有些虽不构成错误，但可以更好的地方。。</p>
+<p>比如 algorithm 部分按字典序介绍，远不如按功能分类来得直观；又比如，部分注释只讲了“做什么”，没讲“为什么”；红黑树的理论缺乏；<code>__rotate_cycle</code> 的解释也缺位（本可借此引出美妙的数学同余关系）。</p>
 <hr>
-<p>按惯例，读书后总要写点读后感。但这次写着写着，却变成了勘误表。有些感慨，但无论如何，这书也让我获益不少，起码，它陪我度过了3个愉快的周末。</p>
+<p>按惯例，读书之后总要写些感想。但这次写着写着，就成了勘误表。</p>
+<p>虽然写着写着成了勘误表，但不得不说，这本书确实也让我受益良多——它陪我度过了三个愉快的周末，也唤起了我某些美好的回忆。</p>
  
       <!-- reward -->
       
