@@ -80,7 +80,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">2.1k</span>
+            <span class="post-count">2.4k</span>
         </span>
     </span>
 
@@ -89,7 +89,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">7 分钟</span>
+            <span class="post-count">9 分钟</span>
         </span>
     </span>
 </div>
@@ -107,7 +107,28 @@
   <h2 id="STL源码剖析勘误"><a href="#STL源码剖析勘误" class="headerlink" title="STL源码剖析勘误"></a>STL源码剖析勘误</h2><p>最近抽空，读完了当年只读了一半的书——《STL源码剖析》。</p>
 <p>之前读过很多侯先生的译作，获益良多。但侯先生自己写书时，似乎没有译书时那么用心，多处都有表述不清，或与事实不符的地方。记录如下</p>
 <ul>
-<li><h5 id="认为distance函数与output-iterator可以兼容"><a href="#认为distance函数与output-iterator可以兼容" class="headerlink" title="认为distance函数与output iterator可以兼容"></a>认为distance函数与output iterator可以兼容</h5>在原书第99页提到</li>
+<li><h5 id="对预定义宏的疑惑"><a href="#对预定义宏的疑惑" class="headerlink" title="对预定义宏的疑惑"></a>对预定义宏的疑惑</h5></li>
+</ul>
+<p> 在原书23页，有以下代码代码注释</p>
+<blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __STL_NEED_TYPENAME</span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> typename <span class="comment">// 侯捷： 难道不该 #define typename class 吗？</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+</blockquote>
+<p> 此处，还真<strong>不应该 <code>#define typename class</code></strong>,激活此宏，是为了适配部分老旧编译器（如gcc1.x）。在那些编译器中，<code>typename</code>并不是关键字,在这些编译器里，下面这种标准的写法无法通过编译：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typename</span> iterator_traits&lt;InputIterator&gt;::value_type value;</span><br></pre></td></tr></table></figure>
+
+<p>反倒是下面的非标准写法能通过编译：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">iterator_traits&lt;InputIterator&gt;::value_type value;</span><br></pre></td></tr></table></figure>
+
+<p>为了兼容标准的和老旧的编译器，我们就需要在识别到旧编译器时，通过宏，将<code>typename</code>“空气化”，即</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __STL_NEED_TYPENAME <span class="comment">//如果是上古编译器，此宏会被定义</span></span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> typename <span class="comment">// 此时源码里面写typename时，等于什么也不写</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<p>侯先生想当然地觉得应该<code> #define typename class</code>,大概是他以为源码中会有以下的写法:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span> U&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">()</span></span>&#123;&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>如果<code>typename</code>不是关键字，那么确实应该将它们换成<code>class</code>.但事实上，sgi stl里并没有这样的写法，源码中所有的模版变量都是用<code>class</code>声明的，既然没有写成<code>typename</code>，也就无需用宏来替换。</p>
+<hr>
+<ul>
+<li><h5 id="误认为distance函数与output-iterator可以兼容"><a href="#误认为distance函数与output-iterator可以兼容" class="headerlink" title="误认为distance函数与output iterator可以兼容"></a>误认为distance函数与output iterator可以兼容</h5>在原书第99页提到</li>
 </ul>
 <blockquote>
 <p>换句话说，当客端调用distance()并使用output iterator或forward iterator 或者 bidirectional iterator时，统统都会传递调用input iterator的那个__distance()函数。</p>
@@ -115,7 +136,7 @@
 <p>作者这里是想当然了，事实上，因为output iterator不保证支持++操作，所以distance函数不能以它为参数。<strong>当客端调用distance()时，是不能使用output iterator的。</strong></p>
 <hr>
 <ul>
-<li>对vector::insert_aux的疑惑</li>
+<li><h5 id="对vector-insert-aux的疑惑"><a href="#对vector-insert-aux的疑惑" class="headerlink" title="对vector::insert_aux的疑惑"></a>对vector::insert_aux的疑惑</h5></li>
 </ul>
 <p> 在原书122页到123页中，有代码</p>
 <blockquote>
@@ -133,9 +154,7 @@
 <p>此处是<strong>明显的笔误</strong>，<code>if (ite!=0)</code>应该是<code>if (ite!=ilist.end())</code>才对。</p>
 <hr>
 <ul>
-<li><p>对list的sort算法类型错误归类</p>
-<p>原书142页，有如下代码注释</p>
-</li>
+<li><h5 id="对list的sort算法类型错误归类"><a href="#对list的sort算法类型错误归类" class="headerlink" title="对list的sort算法类型错误归类"></a>对list的sort算法类型错误归类</h5>原书142页，有如下代码注释</li>
 </ul>
 <blockquote>
  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//本函数采用quick sort</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">T</span>, <span class="keyword">class</span> <span class="title class_">Alloc</span>&gt;</span><br><span class="line"><span class="type">void</span> list&lt;T, Alloc&gt;::<span class="built_in">sort</span>()&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -152,7 +171,7 @@
 <p>反面例子很容易构造，将176页heap内的31替换成35,24替换成33，即可验证。</p>
 <hr>
 <ul>
-<li>对红黑树插入情况的讨论不全面</li>
+<li><h5 id="对红黑树插入情况的讨论不全面"><a href="#对红黑树插入情况的讨论不全面" class="headerlink" title="对红黑树插入情况的讨论不全面"></a>对红黑树插入情况的讨论不全面</h5></li>
 </ul>
 <p>原书210页到211页，作者讨论了红黑树插入新节点后，树结构被破坏的四种情况，分别是</p>
 <ol>
@@ -164,7 +183,7 @@
 <p>显然，<strong>作者没有分析s为红且X为内侧插入这种情况</strong>，如果出现这种情况，可以先按情况2方案处理，处理之后就会转化成情况3或者情况4。</p>
 <hr>
 <ul>
-<li><h5 id="对红黑树的重新平衡调整解析错误"><a href="#对红黑树的重新平衡调整解析错误" class="headerlink" title="对红黑树的重新平衡调整解析错误"></a>对红黑树的重新平衡调整解析错误</h5></li>
+<li><h5 id="对红黑树重新平衡的调整过程描述错误"><a href="#对红黑树重新平衡的调整过程描述错误" class="headerlink" title="对红黑树重新平衡的调整过程描述错误"></a>对红黑树重新平衡的调整过程描述错误</h5></li>
 </ul>
 <p>原书212页提到</p>
 <blockquote>
@@ -175,7 +194,7 @@
 <p>另外，此处还有明显笔误，“但是如果A的父节点P亦为红色”，这里的“A”应该是X。</p>
 <hr>
 <ul>
-<li><h5 id="对红黑树-insert参数的错误注释"><a href="#对红黑树-insert参数的错误注释" class="headerlink" title="对红黑树__insert参数的错误注释"></a>对红黑树__insert参数的错误注释</h5>原书224页，有这样的注释代码</li>
+<li><h5 id="对红黑树-insert函数参数的错误注释"><a href="#对红黑树-insert函数参数的错误注释" class="headerlink" title="对红黑树__insert函数参数的错误注释"></a>对红黑树__insert函数参数的错误注释</h5>原书224页，有这样的注释代码</li>
 </ul>
 <blockquote>
  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Key</span>, <span class="keyword">class</span> <span class="title class_">Value</span>, <span class="keyword">class</span> <span class="title class_">KeyOfValue</span>, <span class="keyword">class</span> <span class="title class_">Compare</span>, <span class="keyword">class</span> <span class="title class_">Alloc</span>&gt;</span><br><span class="line"><span class="keyword">typename</span> rb_tree&lt;Key, Value, KeyOfValue, compare, Alloc&gt;::iterator</span><br><span class="line">rb_tree&lt;Key, Value, KeyOfValue, compare, Alloc&gt;::</span><br><span class="line">  __insert(base_ptr x_, base_ptr y_, <span class="type">const</span> Value&amp; v)&#123;</span><br><span class="line">  <span class="comment">//参数x_为新值插入点，参数y_为插入点之父节点，参数v为新值    </span></span><br><span class="line">      <span class="comment">//...</span></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
@@ -183,16 +202,17 @@
 <p>  <strong>“参数x_为新值插入点”这个说法与事实不符</strong>，看后面的源码可以发现，新值插入点是函数内部生成的<code>z = create_node(v);</code>，至于<code>x_</code>，从外部调用看，它只可能是<code>null</code>或者与<code>y_</code>相等。</p>
 <hr>
 <ul>
-<li><h5 id="未理源码解辅助函数的动机，并给了一个不符合c-规范的，更糟糕的替代"><a href="#未理源码解辅助函数的动机，并给了一个不符合c-规范的，更糟糕的替代" class="headerlink" title="未理源码解辅助函数的动机，并给了一个不符合c++规范的，更糟糕的替代"></a>未理源码解辅助函数的动机，并给了一个不符合c++规范的，更糟糕的替代</h5>原书300页，有这样的注释</li>
+<li><h5 id="未理解源码中使用辅助函数的动机"><a href="#未理解源码中使用辅助函数的动机" class="headerlink" title="未理解源码中使用辅助函数的动机"></a>未理解源码中使用辅助函数的动机</h5>原书300页，有这样的注释</li>
 </ul>
 <blockquote>
  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> InputIterator, <span class="keyword">class</span> OutputIterator&gt;</span></span><br><span class="line"><span class="function">OutputIterator <span class="title">adjacent_difference</span><span class="params">(InputIterator first, InputIterator last, OutputIterator result)</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(fisrt == last) <span class="keyword">return</span> result;</span><br><span class="line">    *result = *first; <span class="comment">//首先记录第一个元素</span></span><br><span class="line">    <span class="keyword">return</span> __adjacent_difference(fisrt, last, result, <span class="built_in">value_type</span>(first));</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//侯捷认为(并经证实)，不需像上行那样传递调用，可改用以下写法(正个函数)</span></span><br><span class="line">    <span class="comment">//if(fisrt == last) return result;</span></span><br><span class="line">    <span class="comment">//*result = *first;</span></span><br><span class="line">    <span class="comment">//iterator_traits&lt;InputIterator&gt;::value_type value = *first;</span></span><br><span class="line">    <span class="comment">//while (++first != last)&#123; //走过整个区间</span></span><br><span class="line">    <span class="comment">// ...以下同__adjacent_difference()的对应内容    </span></span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 </blockquote>
-<p>事实上，<code>iterator_traits&lt;InputIterator&gt;::value_type value = *first;</code><strong>这样的写法是不符合c++标准的</strong>，标准的写法是<code>typename iterator_traits&lt;InputIterator&gt;::value_type value = *first</code>,如果侯先生真证实这个写法，那他验证时用的应该是一个未跟标准的编译器。</p>
+<p>事实上，<code>iterator_traits&lt;InputIterator&gt;::value_type value = *first;</code><strong>这样的写法是不符合c++标准的</strong>，标准的写法是<code>typename iterator_traits&lt;InputIterator&gt;::value_type value = *first</code>,如果侯先生真验证了这个写法，那么他验证时，用的应该是一个未符合标准的编译器。</p>
 <p>此外，类似<code>iterator_traits&lt;InputIterator&gt;::value_type value = *first</code><strong>这样的代码信息密度低，并不利于阅读</strong>，远不如原本代码里<code>value_type(first)</code>这样的表达来得简洁，清晰。</p>
+<p>总而言之，此处作者<strong>并未理解源码中使用辅助函数的动机，并给了一个不符合c++规范的替代方案</strong>。实际上，这个替代方案更糟糕。</p>
 <hr>
 <ul>
-<li>未深究iota名字的含义</li>
+<li><h5 id="未深究iota名字的含义"><a href="#未深究iota名字的含义" class="headerlink" title="未深究iota名字的含义"></a>未深究iota名字的含义</h5></li>
 </ul>
 <p> 原书305页，有这样的注释</p>
 <blockquote>
@@ -217,8 +237,12 @@
 <p>insertion Sort以双层循环的形式进行。外循环遍历整个序列，每次迭代决定出一个子区间：内层循环遍历子区间，将子区间的每一个“逆转对(inversion)”倒转过来。所谓“逆转对”是值任何两个迭代器 i, j, i &lt;j 而 *i &gt; *j。一旦不存在“逆转对”，序列即排序完毕。</p>
 <p>显然，上面描述的是冒泡排序而不是插入排序。在392页对<code>__unguarded_inear_insert</code>函数做注释时，也错误地将“平移”操作注释成“消除逆转对”。</p>
 <hr>
+<ul>
+<li><strong>可以写得更好的地方</strong></li>
+</ul>
 <p>此外，书中还有其他不算错误，但可以写得更好的地方。</p>
 <p>比如，algorithm部分的介绍按字典序（而不是按功能归类这种更好的方式）；又比如，部分函数注释只讲了“做什么”而没有讲“为什么”；再比如，对红黑树的理论基本没有讨论，还有一处我觉得挺可惜的——对<code>__rotate_cycle</code>的随机迭代器版本只贴源码毫无解释（本可借此引出美妙的数学同余关系），等等等等。</p>
+<hr>
 <p>按惯例，读书后总要写点读后感。但这次写着写着，却变成了勘误表。有些感慨，但无论如何，这书也让我获益不少，起码，它陪我度过了3个愉快的周末。</p>
  
       <!-- reward -->
