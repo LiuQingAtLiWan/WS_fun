@@ -197,7 +197,7 @@
 <blockquote>
 <p>换句话说，当客端调用distance()并使用output iterator或forward iterator 或者 bidirectional iterator时，统统都会传递调用input iterator的那个__distance()函数。</p>
 </blockquote>
-<p>这是想当然的说法。事实上，<strong>output iterator 连最基本的 <code>++</code> 操作都无法保证支持</strong>，根本不能作为 <code>distance</code> 的参数。标准库对此有限制。</p>
+<p>这是想当然的说法。事实上，<strong>output iterator 连最基本的 <code>==</code> 操作都无法保证支持</strong>，根本不能作为 <code>distance</code> 的参数。标准库对此有限制。</p>
 <hr>
 <ul>
 <li><h5 id="误读-vector-insert-aux-的复制逻辑"><a href="#误读-vector-insert-aux-的复制逻辑" class="headerlink" title="误读 vector::insert_aux 的复制逻辑"></a>误读 <code>vector::insert_aux</code> 的复制逻辑</h5></li>
