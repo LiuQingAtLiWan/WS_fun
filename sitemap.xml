@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://liuqing.fun/2026/03/12/why-not-claw/</loc>
+    
+    <lastmod>2026-03-12</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://liuqing.fun/2025/04/23/noteOfAnnotatedStl/</loc>
     
     <lastmod>2025-05-11</lastmod>
@@ -85,7 +94,7 @@
 
   <url>
     <loc>https://liuqing.fun/</loc>
-    <lastmod>2025-05-11</lastmod>
+    <lastmod>2026-03-12</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -93,21 +102,21 @@
   
   <url>
     <loc>https://liuqing.fun/tags/essays/</loc>
-    <lastmod>2025-05-11</lastmod>
+    <lastmod>2026-03-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://liuqing.fun/tags/video/</loc>
-    <lastmod>2025-05-11</lastmod>
+    <lastmod>2026-03-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://liuqing.fun/tags/coding/</loc>
-    <lastmod>2025-05-11</lastmod>
+    <lastmod>2026-03-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
